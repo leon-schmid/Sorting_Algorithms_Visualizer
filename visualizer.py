@@ -9,8 +9,14 @@ class DrawInformation:
     WHITE = 255, 255, 255
     GREEN = 0, 255, 0
     RED = 255, 0, 0
-    GREY = 128, 128, 128
     BACKGROUND_COLOR = WHITE
+
+    # Gradients: Stores the different colors for the bars, representing the numbers, to make a single number representation more clear
+    GRADIENT = [
+        (128, 128, 128),
+        (160, 160, 160),
+        (192, 192, 192)
+    ]
 
     # defines the total number of pixels we want to have as a padding from the left and right side of the windows
     SIDE_PAD = 100
@@ -45,9 +51,36 @@ class DrawInformation:
         self.start_x = self.SIDE_PAD // 2
 
 
+def draw(draw_info):
+    # clear the screen
+    draw_info.window.fill(draw_info.BACKGROUND_COLOR)
+    # draw list
+    draw_list(draw_info)
+
+    # update the screen and show everything, which has been drawn before
+    pygame.display.update()
+
+
+def draw_list(draw_info):
+    lst = draw_info.lst
+    # iterate over the vale and index of the items in list 
+    for i, val in enumerate(lst):
+
+        # calculate x value of the bar (bottom left corner)
+        x = draw_info.start_x + i * draw_info.bar_width
+        # calculate the y value of the bar (from top hand corner to bottom left hand corner)
+        y = draw_info.height - (val - draw_info.min_val) * draw_info.bar_height
+        
+        # determine the color of the bar (grey -> light grey -> dark grey -> grey -> ...)
+        color = draw_info.GRADIENT[i % 3]
+
+        # we can use the height, because everything over the max. height is "underneath" the screen and will just be cut off
+        pygame.draw.rect(draw_info.window, color, (x, y, draw_info.bar_width, draw_info.height))
+
+
 def generate_starting_list(length, min_val, max_val):
     lst = []
-
+    # calculate the random numbers for the list and insert them into the list
     for _ in range(length):
         val = random.randint(min_val, max_val)
         lst.append(val)
@@ -72,7 +105,7 @@ def main():
     while(run):
         clock.tick(60)
 
-        pygame.display.update()
+        draw(draw_info)
 
         # handling events
         for event in pygame.event.get():
