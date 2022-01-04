@@ -18,6 +18,10 @@ class DrawInformation:
         (192, 192, 192)
     ]
 
+    # font for displaying controls
+    FONT = pygame.font.SysFont("comicsans", 25)
+    LARGEFONT = pygame.font.SysFont("comicsans", 40)
+
     # defines the total number of pixels we want to have as a padding from the left and right side of the windows
     SIDE_PAD = 100
     
@@ -54,6 +58,14 @@ class DrawInformation:
 def draw(draw_info):
     # clear the screen
     draw_info.window.fill(draw_info.BACKGROUND_COLOR)
+    # write controls
+    controls = draw_info.FONT.render("R - Reset | SPACE - Start Sorting | A - Ascending | D - Descending", 1, draw_info.BLACK)
+    # display controls
+    draw_info.window.blit(controls, (draw_info.width / 2 - controls.get_width()/2 , 5))
+    # write selection of sorting algorithms
+    sorting = draw_info.FONT.render("I - Insertion Sort | B - Bubble Sort", 1, draw_info.BLACK)
+    # display controls
+    draw_info.window.blit(sorting, (draw_info.width / 2 - controls.get_width()/2 , 35))
     # draw list
     draw_list(draw_info)
 
@@ -99,7 +111,9 @@ def main():
     max_val = 100
 
     lst = generate_starting_list(length, min_val, max_val)
-    draw_info = DrawInformation(800, 600, lst)
+    draw_info = DrawInformation(1200, 800, lst)
+    sorting = False
+    ascending = True
 
     # "infinte" loop to handle all the events (rest the visualizer, changing sorting order, ...)
     while(run):
@@ -109,8 +123,31 @@ def main():
 
         # handling events
         for event in pygame.event.get():
+            # window can be closed, clicking on X
             if event.type == pygame.QUIT:
                 run = False
+
+            # option to reset the window and therefore generate new list
+            if event.type != pygame.KEYDOWN:
+                continue
+            else:
+                # window can be reset, pressing r key on keyboards
+                if event.key == pygame.K_r:
+                    lst = generate_starting_list(length, min_val, max_val)
+                    draw_info.set_list(lst)
+                    sorting = False
+                # pressing space on keyboard will start the sorting process (if not sorting yet)
+                elif event.key == pygame.K_SPACE and not sorting == False:
+                    sorting = True
+                # while we are not sorting, we can change the sorting order to ascending (a) or descending (b) 
+                elif event.key == pygame.K_a and not sorting == False:
+                    ascending = True
+                elif event.key == pygame.K_d and not sorting == False:
+                    ascending = False
+
+
+
+
         
     pygame.quit()
 
