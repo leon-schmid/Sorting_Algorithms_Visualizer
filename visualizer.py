@@ -59,14 +59,18 @@ class DrawInformation:
 def draw(draw_info, algo_name, ascending):
     # clear the screen
     draw_info.window.fill(draw_info.BACKGROUND_COLOR)
+    # write Info about current sorting algorithm and sorting order
+    title = draw_info.LARGEFONT.render(f"{algo_name} - {'Ascending' if ascending else 'Descending'}", 1, draw_info.GREEN)
+    # display title
+    draw_info.window.blit(title, (draw_info.width/2 - title.get_width()/2 , 5))
     # write controls
     controls = draw_info.FONT.render("R - Reset | SPACE - Start Sorting | A - Ascending | D - Descending", 1, draw_info.BLACK)
     # display controls
-    draw_info.window.blit(controls, (draw_info.width/2 - controls.get_width()/2 , 45))
+    draw_info.window.blit(controls, (draw_info.width/2 - controls.get_width()/2 , 55))
     # write selection of sorting algorithms
     sorting = draw_info.FONT.render("I - Insertion Sort | B - Bubble Sort", 1, draw_info.BLACK)
     # display controls
-    draw_info.window.blit(sorting, (draw_info.width/2 - sorting.get_width()/2 , 75))
+    draw_info.window.blit(sorting, (draw_info.width/2 - sorting.get_width()/2 , 80))
     # draw list
     draw_list(draw_info)
 
@@ -130,6 +134,27 @@ def bubble_sort(draw_info, ascending = True):
                 yield True
     return lst
 
+def insertion_sort(draw_info, ascending = True):
+    lst = draw_info.lst
+
+    for i in range(1, len(lst)):
+        current = lst[i]
+
+        while True:
+            ascending_sort = i > 0 and lst[i - 1] > current and ascending
+            descending_sort = i > 0 and lst[i - 1] < current and not ascending
+
+            if not ascending_sort and not descending_sort:
+                break
+
+            lst[i] = lst[i - 1]
+            i = i - 1
+            lst[i] = current
+            draw_list(draw_info, {i - 1: draw_info.GREEN, i: draw_info.RED}, True)
+            yield True
+
+    return lst
+
 def main():
     run = True
     # pygame Clock do manage loop speed
@@ -145,6 +170,7 @@ def main():
     sorting = False
     ascending = True
 
+    # set bubble sort as default sorting algorithm
     sorting_algorithm = bubble_sort
     sorting_algorithm_name = "Bubble Sort"
     sorting_algorithm_generator = None
@@ -182,11 +208,17 @@ def main():
                     sorting = True
                     sorting_algorithm_generator = sorting_algorithm(draw_info, ascending)
                 # while we are not sorting, we can change the sorting order to ascending (a) or descending (b) 
-                elif event.key == pygame.K_a and not sorting == False:
+                elif event.key == pygame.K_a and not sorting:
                     ascending = True
-                elif event.key == pygame.K_d and not sorting == False:
+                elif event.key == pygame.K_d and not sorting:
                     ascending = False
-
+                # controls for selecting the sorting algorithm
+                elif event.key == pygame.K_i and not sorting:
+                    sorting_algorithm = insertion_sort
+                    sorting_algorithm_name = "Insertion Sort"
+                elif event.key == pygame.K_b and not sorting:
+                    sorting_algorithm = bubble_sort
+                    sorting_algorithm_name = "Bubble Sort"
 
     pygame.quit()
 
