@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 pygame.init()
 
 
@@ -50,22 +51,22 @@ class DrawInformation:
         # calculate the width of the bars
         self.bar_width = round((self.width - self.SIDE_PAD) / len(lst))
         # calculate the height of an individual bar
-        self.bar_height = round((self.height - self.TOP_PAD) / (self.max_val - self.min_val))
+        self.bar_height = math.floor((self.height - self.TOP_PAD) / (self.max_val - self.min_val))
         # calculate the starting point (from the left) on the horizontal x-axes
         self.start_x = self.SIDE_PAD // 2
 
 
-def draw(draw_info):
+def draw(draw_info, algo_name, ascending):
     # clear the screen
     draw_info.window.fill(draw_info.BACKGROUND_COLOR)
     # write controls
     controls = draw_info.FONT.render("R - Reset | SPACE - Start Sorting | A - Ascending | D - Descending", 1, draw_info.BLACK)
     # display controls
-    draw_info.window.blit(controls, (draw_info.width / 2 - controls.get_width()/2 , 5))
+    draw_info.window.blit(controls, (draw_info.width/2 - controls.get_width()/2 , 45))
     # write selection of sorting algorithms
     sorting = draw_info.FONT.render("I - Insertion Sort | B - Bubble Sort", 1, draw_info.BLACK)
     # display controls
-    draw_info.window.blit(sorting, (draw_info.width / 2 - controls.get_width()/2 , 35))
+    draw_info.window.blit(sorting, (draw_info.width/2 - sorting.get_width()/2 , 75))
     # draw list
     draw_list(draw_info)
 
@@ -73,11 +74,17 @@ def draw(draw_info):
     pygame.display.update()
 
 
-def draw_list(draw_info):
+def draw_list(draw_info, color_positions = {}, clear_background = False):
     lst = draw_info.lst
+
+    # clear the window if requested
+    if (clear_background):
+        clear_rect = (draw_info.SIDE_PAD//2, draw_info.TOP_PAD, draw_info.width - draw_info.SIDE_PAD, draw_info.height - draw_info.TOP_PAD)
+        pygame.draw.rect(draw_info.window, draw_info.BACKGROUND_COLOR, clear_rect)
+
+
     # iterate over the vale and index of the items in list 
     for i, val in enumerate(lst):
-
         # calculate x value of the bar (bottom left corner)
         x = draw_info.start_x + i * draw_info.bar_width
         # calculate the y value of the bar (from top hand corner to bottom left hand corner)
@@ -86,8 +93,15 @@ def draw_list(draw_info):
         # determine the color of the bar (grey -> light grey -> dark grey -> grey -> ...)
         color = draw_info.GRADIENT[i % 3]
 
+        # manually override the color to green and red to visualize swapping of numbers
+        if i in color_positions:
+            color = color_positions[i]
+
         # we can use the height, because everything over the max. height is "underneath" the screen and will just be cut off
         pygame.draw.rect(draw_info.window, color, (x, y, draw_info.bar_width, draw_info.height))
+
+    if (clear_background):
+        pygame.display.update()
 
 
 def generate_starting_list(length, min_val, max_val):
@@ -99,6 +113,22 @@ def generate_starting_list(length, min_val, max_val):
 
     return lst
 
+
+def bubble_sort(draw_info, ascending = True):
+    lst = draw_info.lst
+
+    for i in range(len(lst) - 1):
+        for j in range(len(lst) - 1 - i):
+            num1 = lst[j]
+            num2 = lst[j + 1]
+
+            # compare two values and swap if needed
+            if (num1 > num2 and ascending) or (num1 < num2 and not ascending):
+                lst[j], lst[j + 1] = lst[j + 1], lst[j]
+                draw_list(draw_info, {j: draw_info.GREEN, j+1: draw_info.RED}, True)
+                # as we want to call the function every time we want a swap to occur --> generator (store current state of functio, therefore yield and not return)
+                yield True
+    return lst
 
 def main():
     run = True
@@ -115,11 +145,22 @@ def main():
     sorting = False
     ascending = True
 
+    sorting_algorithm = bubble_sort
+    sorting_algorithm_name = "Bubble Sort"
+    sorting_algorithm_generator = None
+
     # "infinte" loop to handle all the events (rest the visualizer, changing sorting order, ...)
     while(run):
         clock.tick(60)
 
-        draw(draw_info)
+        # as the sorting algorithm itself is a generator and will throw and StopIterationException when done --> catch it and indicate, that we are done sorting
+        if (sorting):
+            try:
+                next(sorting_algorithm_generator)
+            except StopIteration:
+                sorting = False
+        else:
+            draw(draw_info, sorting_algorithm_name, ascending)
 
         # handling events
         for event in pygame.event.get():
@@ -137,8 +178,9 @@ def main():
                     draw_info.set_list(lst)
                     sorting = False
                 # pressing space on keyboard will start the sorting process (if not sorting yet)
-                elif event.key == pygame.K_SPACE and not sorting == False:
+                elif event.key == pygame.K_SPACE and sorting == False:
                     sorting = True
+                    sorting_algorithm_generator = sorting_algorithm(draw_info, ascending)
                 # while we are not sorting, we can change the sorting order to ascending (a) or descending (b) 
                 elif event.key == pygame.K_a and not sorting == False:
                     ascending = True
@@ -146,9 +188,6 @@ def main():
                     ascending = False
 
 
-
-
-        
     pygame.quit()
 
 if __name__ == "__main__":
