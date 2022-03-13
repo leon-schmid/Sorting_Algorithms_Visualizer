@@ -160,16 +160,16 @@ def selection_sort(draw_info, ascending = True):
 
     for i in range(len(lst)):
         minIndex = i
-        for j in range(i + 1, len(lst)):
-            # compare the two values
-            comparison = (lst[minIndex] > lst[j] and ascending) or (lst[minIndex] < lst[j] and not ascending)
-            if(comparison):
-                minIndex = j
-            # swap the values
-            lst[i], lst[minIndex] = lst[minIndex], lst[i]
-            draw_list(draw_info, {j: draw_info.GREEN, j+1: draw_info.RED}, True)
-            yield True
 
+        for j in range(i + 1, len(lst)):
+            if(lst[j] < lst[minIndex] and ascending):
+                minIndex = j
+            elif(lst[j] > lst[minIndex] and not ascending):
+                j = minIndex
+        lst[i], lst[minIndex] = lst[minIndex], lst[i]
+        draw_list(draw_info, {minIndex: draw_info.GREEN, i: draw_info.RED}, True)
+        yield True
+    
     return lst
 
 def main():
